@@ -1,83 +1,81 @@
-# Approach, Challenges, and Solutions
+# ArgoCD Deployment Guide
 
-## Approach
+This guide outlines the steps to deploy applications using ArgoCD on a Kubernetes cluster.
 
-Our approach to solving the assignment involved a combination of Git and Kubernetes operations to manage application deployments and configurations. We utilized Git for version control and managing changes to configuration files, while Kubernetes was used for orchestrating containerized applications.
+## Prerequisites
 
-## Challenges
+- [minikube](https://minikube.sigs.k8s.io/docs/start/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- [helm](https://helm.sh/docs/intro/install/)
 
-### Lack of Helm Installation
-- **Challenge**: Initially, Helm was not installed in the environment, preventing us from using Helm charts for managing Kubernetes applications.
-- **Solution**: We addressed this challenge by installing Helm using Homebrew package manager.
+## Steps
 
-### Namespace Deletion Error
-- **Challenge**: An error occurred while trying to delete the `argocd` namespace, possibly due to existing resources or permissions issues.
-- **Solution**: We successfully deleted the namespace after identifying and resolving the underlying issue.
+1. Check Minikube status:
+    ```bash
+    minikube status
+    ```
 
-### Command Execution Errors
-- **Challenge**: Some commands, such as `kubectl get rollout`, resulted in errors indicating that the server didn't recognize the resource type.
-- **Solution**: We adjusted our approach and used alternative commands (`kubectl get pods`) to gather relevant information about the cluster status.
+2. Repository Structure:
+    ```bash
+    tree argo-test-local
+    ```
 
+3. Create a namespace for ArgoCD:
+    ```bash
+    kubectl create ns argocd
+    ```
 
-## Kubernetes Operations
+4. Install ArgoCD:
+    ```bash
+    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    ```
 
-1. **Apply Changes**:
-   - Apply changes specified in `application.yaml` to the Kubernetes cluster:
-     ```
-     kubectl apply -f application.yaml
-     ```
+5. Check ArgoCD pods:
+    ```bash
+    kubectl get pod -n argocd
+    ```
 
-2. **View Cluster Status**:
-   - Check the status of rollouts in the cluster:
-     ```
-     kubectl get rollout
-     ```
-   - View all namespaces in the cluster:
-     ```
-     kubectl get ns
-     ```
-   - View all pods in the cluster:
-     ```
-     kubectl get pods
-     ```
+6. Check ArgoCD services:
+    ```bash
+    kubectl get svc -n argocd
+    ```
 
-3. **Namespace Management**:
-   - Delete the `argocd` namespace:
-     ```
-     kubectl delete ns argocd
-     ```
+7. Port forward to access ArgoCD dashboard:
+    ```bash
+    kubectl port-forward -n argocd svc/argocd-server 8080:443
+    ```
 
-## Additional Operations
+8. Access ArgoCD dashboard by visiting `http://localhost:8080` in your web browser.
 
-1. **Helm Repository Management**:
-   - Add Argo Helm repository:
-     ```
-     helm repo add argo https://argoproj.github.io/argo-helm
-     ```
-   - Update Helm repositories:
-     ```
-     helm repo update
-     ```
+9. Retrieve initial admin password:
+    ```bash
+    kubectl get secret argocd-initial-admin-secret -n argocd -o yaml
+    echo "cIdW8cQWCsLi00Vt" | base64 --decode
+    ```
 
-2. **Modify and Push Changes**:
-   - Modify `dev/deployment-1.yaml` using a text editor:
-     ```
-     vi dev/deployment-1.yaml
-     ```
-   - Stage changes for commit:
-     ```
-     git add .
-     ```
-   - Commit changes with a message:
-     ```
-     git commit -m "deployment-1 v1.1 updated"
-     ```
-   - Push changes to the remote repository:
-     ```
-     git push -u origin main
-     ```
+10. Apply application configuration:
+    ```bash
+    kubectl apply -f application.yaml
+    ```
 
+11. Install Helm:
+    - **Mac:**
+      ```bash
+      brew install helm
+      ```
+    - **Windows:**
+      Follow [Helm installation guide](https://helm.sh/docs/intro/install/)
+    - **Linux (Ubuntu/RedHat):**
+      Follow [Helm installation guide](https://helm.sh/docs/intro/install/)
 
+12. Add ArgoCD Helm repository and update:
+    ```bash
+    helm repo add argo https://argoproj.github.io/argo-helm
+    helm repo update
+    ```
 
+## Note
 
+- Default username for ArgoCD dashboard is `admin`.
+- Retrieve the password using the secret `argocd-initial-admin-secret`.
 
